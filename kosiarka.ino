@@ -13,7 +13,7 @@
 #define RESOLUTION 25
 
 //* PINY *
-#define SERVO 10
+#define SERVO 9
 #define CZUJNIK 3
 #define SCLK 5
 #define RCLK 6

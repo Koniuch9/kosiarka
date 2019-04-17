@@ -27,6 +27,8 @@ volatile int rpm_tick_counter = 0;
 volatile bool mode = false; //true - zdalne, false - sterowanie samemu 
 int angle = 0;
 long rpm = 0;
+long rpm_sum = 0;
+long rpm_count = 0;
 volatile long prev_time = 0;
 volatile long sumTime = 0;
 volatile long encTime;
@@ -56,7 +58,7 @@ unsigned volatile long previousMode = 0;
 void changeMode()
 {
     unsigned long timeN = millis();
-    if(timeN - previousMode > 100 && rpm <= 1000L)
+    if(timeN - previousMode > 100 && rpm >= 1000L)
     {
       mode = !mode;
       digitalWrite(MODE,mode);
@@ -122,10 +124,12 @@ void loop()
         {
           long rpm_pom = 100000000/(micros()-timeNow)/2;
           if(rpm_pom < 4000){
-            rpm = rpm_pom / RESOLUTION;            
-            rpm *= RESOLUTION;
+            //rpm = rpm_pom / RESOLUTION;            
+            //rpm *= RESOLUTION;
             //if(lastRPM - rpm > 500)rpm = lastRPM;
             //else lastRPM = rpm;
+            rpm_sum += rpm_pom;
+            rpm_count++;
           }
           timeNow = micros();    
         }
@@ -134,12 +138,14 @@ void loop()
         {          
           if(millis() - timeNow/1000 >= REFRESH_RATE)rpm = 0;
           
-          //rpm = 2500; // TESTESTESTESTESTEST
-
-                              
+          //rpm = 2500; // TESTESTESTESTESTEST          
+          rpm = rpm_sum / rpm_count;
+          rpm_sum = rpm_count = 0;
+          rpm /= RESOLUTION;
+          rpm *= RESOLUTION;                              
           if(mode)
           {
-              noInterrupts();
+              noInterrupts();              
               long setLevel = MIN_RPM + rpm_set_level*RESOLUTION;
               if(rpm - setLevel > 150L || rpm - setLevel < -150L)
               {
@@ -150,6 +156,7 @@ void loop()
               }
               interrupts();
           } 
+          
           dsp.setNumber("Rpmreal",rpm,0);
           refreshTime = millis();  
         } 
